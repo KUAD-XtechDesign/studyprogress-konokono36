@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-		<title>Google Gravity</title>
+		<title>Google Space</title>
 		<style>
 			body {
 
@@ -247,8 +247,6 @@
 	</head>
 	<body>
 
-		<script src="//cdn.webglstats.com/stat.js" defer async></script>
-
 		<script type="text/javascript">
 		  var _gaq = _gaq || [];
 		  _gaq.push(['_setAccount', 'UA-86951-7']);
@@ -261,7 +259,7 @@
 		  })();
 		</script>
 
-		<table id="topbar">
+				<table id="topbar">
 			<tr>
 				<td class="box2d" onClick="location.href = 'https://plus.google.com/?gpsrc=ogpy0&tab=wX';"><span>+You</span></td>
 				<td class="box2d selected" onClick="location.href = 'http://www.google.com/webhp?hl=en&tab=ww';"><span>Search</span></td>
@@ -1543,12 +1541,12 @@
 			var stage = [ window.screenX, window.screenY, window.innerWidth, window.innerHeight ];
 			getBrowserDimensions();
 
-			var isRunning = false;
 			var isMouseDown = false;
 
 			var worldAABB;
 			var world;
 			var iterations = 1;
+			var timeStep = 1 / 25;
 
 			var walls = [];
 			var wall_thickness = 200;
@@ -1569,9 +1567,10 @@
 			var imFeelingLuckyMode = false;
 			var resultBodies = [];
 
-			var gravity = { x: 0, y: 1 };
+			var gravity = { x: 0, y: 0 };
 
 			init();
+			setInterval( loop, 25 );
 
 			if ( location.search != "" ) {
 
@@ -1584,7 +1583,6 @@
 					if (param[0] == "q") {
 
 						document.getElementById('q').value = param[1];
-						run();
 						break;
 					}
 				}
@@ -1610,12 +1608,9 @@
 
 				document.addEventListener( 'keyup', onDocumentKeyUp, false );
 
-
 				document.addEventListener( 'touchstart', onDocumentTouchStart, false );
 				document.addEventListener( 'touchmove', onDocumentTouchMove, false );
 				document.addEventListener( 'touchend', onDocumentTouchEnd, false );
-
-				window.addEventListener( 'deviceorientation', onWindowDeviceOrientation, false );
 
 				// init box2d
 
@@ -1664,13 +1659,6 @@
 
 			}
 
-			function run() {
-
-				isRunning = true;
-				requestAnimationFrame( loop );
-
-			}
-
 			//
 
 			function onDocumentMouseDown( event ) {
@@ -1687,8 +1675,6 @@
 
 			function onDocumentMouseMove( event ) {
 
-				if ( !isRunning ) run();
-
 				mouse.x = event.clientX;
 				mouse.y = event.clientY;
 
@@ -1703,12 +1689,6 @@
 			function onDocumentTouchStart( event ) {
 
 				if ( event.touches.length == 1 ) {
-
-					if ( !isRunning ) {
-
-						run();
-
-					}
 
 					mouse.x = event.touches[0].pageX;
 					mouse.y = event.touches[0].pageY;
@@ -1734,17 +1714,6 @@
 				if ( event.touches.length == 0 ) {
 
 					isMouseDown = false;
-				}
-
-			}
-
-			function onWindowDeviceOrientation( event ) {
-
-				if ( event.beta ) {
-
-					gravity.x = Math.sin( event.gamma * Math.PI / 180 );
-					gravity.y = Math.sin( ( Math.PI / 4 ) + event.beta * Math.PI / 180 );
-
 				}
 
 			}
@@ -1788,12 +1757,6 @@
 			/*
 			function search() {
 
-				if ( !isRunning ) {
-
-					run();
-
-				}
-
 				if ( query == document.getElementById('q').value ) {
 
 					page ++;
@@ -1815,6 +1778,7 @@
 				return false;
 
 			}
+			*/
 
 			function imFeelingLucky() {
 
@@ -1855,11 +1819,16 @@
 			function addWeb( data ) {
 
 				var element = document.createElement('div');
-				element.innerHTML = '<div class="result"><div class="title"><a href="' + data.unescapedUrl + '" target="_blank">' + data.title + '</a></div><div class="url">' + data.visibleUrl + '</div><div class="content">' + data.content + '</div>';
+				element.innerHTML = '<div class="result animate"><div class="title"><a href="' + data.unescapedUrl + '" target="_blank">' + data.title + '</a></div><div class="url">' + data.visibleUrl + '</div><div class="content">' + data.content + '</div>';
 
 				document.body.appendChild( element );
 
-				properties.push( [ Math.random() * ( window.innerWidth / 2 ), - 200, 546, element.offsetHeight ] );
+				properties.push( [
+					Math.random() * ( window.innerWidth - 546 ),
+					Math.random() * ( window.innerHeight - element.offsetHeight ),
+					546,
+					element.offsetHeight
+				] );
 
 				var i = properties.length - 1;
 
@@ -1882,9 +1851,15 @@
 				var element = document.createElement( 'img' );
 				element.style.display = 'none';
 				element.style.cursor = 'pointer';
+				element.style.cssName = 'animate';
 				element.addEventListener( 'load', function () {
 
-					properties.push( [ Math.random() * ( window.innerWidth / 2 ), - 200, element.width, element.height ] );
+					properties.push( [
+						Math.random() * ( window.innerWidth - element.width ),
+						Math.random() * ( window.innerHeight - element.height ),
+						element.width,
+						element.height
+					] );
 
 					var i = properties.length - 1;
 
@@ -1918,28 +1893,10 @@
 				document.body.appendChild( element );
 
 			}
-			*/
 
 			//
 
-			var prevTime;
-
 			function loop() {
-
-				requestAnimationFrame( loop );
-
-				if ( prevTime === undefined ) {
-
-					prevTime = Date.now();
-
-				}
-
-				var time = Date.now();
-				var timeStep = ( time - prevTime ) / 1000;
-
-				prevTime = time;
-
-				//
 
 				if (getBrowserDimensions())
 					setWalls();
@@ -1947,8 +1904,8 @@
 				delta[0] += (0 - delta[0]) * .5;
 				delta[1] += (0 - delta[1]) * .5;
 
-				world.m_gravity.x = gravity.x * 750 + delta[0];
-				world.m_gravity.y = gravity.y * 750 + delta[1];
+				world.m_gravity.x = gravity.x * 350 + delta[0];
+				world.m_gravity.y = gravity.y * 350 + delta[1];
 
 				mouseDrag();
 				world.Step(timeStep, iterations);
@@ -1976,19 +1933,18 @@
 
 			function createBox(world, x, y, width, height, fixed, element) {
 
-				if (typeof(fixed) == 'undefined')
-					fixed = true;
-
 				var boxSd = new b2BoxDef();
 
-				if (!fixed)
-					boxSd.density = 1.0;
+				if ( fixed === undefined ) fixed = true;
+				if ( fixed === false  ) boxSd.density = 1.0;
 
 				boxSd.extents.Set(width, height);
 
 				var boxBd = new b2BodyDef();
 				boxBd.AddShape(boxSd);
 				boxBd.position.Set(x,y);
+				boxBd.linearVelocity.Set( Math.random() * 20 - 10, Math.random() * 20 - 10 );
+				boxBd.angularVelocity = Math.random() * 0.1 - 0.05;
 				boxBd.userData = {element: element};
 
 				return world.CreateBody(boxBd)
@@ -2002,12 +1958,12 @@
 					var body = getBodyAtMouse();
 
 					if (body) {
-
 						var md = new b2MouseJointDef();
 						md.body1 = world.m_groundBody;
 						md.body2 = body;
 						md.target.Set(mouse.x, mouse.y);
 						md.maxForce = 30000.0 * body.m_mass;
+						md.timeStep = timeStep;
 						mouseJoint = world.CreateJoint(md);
 						body.WakeUp();
 					}
