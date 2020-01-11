@@ -1,5 +1,18 @@
-@charset "utf-8";
-
-body {
-  background-image: url("..assets/imajes/");
+html,body{
+         min-height: 100vh;
+         padding-top: 33px;/*←footerの高さ*/
+         margin:0 0 0 0;
+         background-color: #f4f4f4;
+}
+.center{
+  text-align: center;
+}
+.profile{
+  margin-bottom: 30px;
+}
+.profile2{
+  margin-top: 10px;
+}
+.imagepic{
+ zoom:0.5;
 }
